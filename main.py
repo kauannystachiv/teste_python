@@ -4,36 +4,39 @@ from pygame import mixer
 import csv
 import os
 
-# ---------------- CONFIGURAÇÕES ----------------------------
+# --- CONFIGURAÇÕES GERAIS ---
+# aqui eu deixei o tamanho da tela e algumas infos do jogo
 WIDTH = 800
 HEIGHT = 600
 TITLE = "Super Vaca 🐮"
 
+# aqui é tipo o tamanho do mapa e das “casinhas” (tiles)
 ROWS = 13
 COLS = 17
 TILE_SIZE_X = WIDTH // COLS
 TILE_SIZE_Y = HEIGHT // ROWS
 
+# testei esses valores até achar um pulo legal
 GRAVITY = 0.5
 JUMP_FORCE = -12
 X_SPEED = 5
 ENEMY_SPEED = 2
 
-# ---------------- ESTADO DO JOGO ----------------------------
-game_state = "jogando"  # pode ser: "jogando", "vitoria", "morte"
+# pra saber em que parte o jogo tá (jogando, morreu ou venceu)
+game_state = "jogando"
 
-# ---------------- CONFIGURAR SOM ----------------------------
+# --- CONFIGURAÇÃO DO SOM ---
 mixer.init()
 
 def carregar_som(caminho):
-    """Tenta carregar o som de forma segura."""
+    # só pra não dar erro se faltar o som
     if os.path.exists(caminho):
         return caminho
     else:
-        print(f"[AVISO] Som não encontrado: {caminho}")
+        print(f"[aviso] som não encontrado: {caminho}")
         return None
 
-# Agora com .wav
+# aqui eu carreguei os sons (usei .wav porque deu menos bug)
 musica_fundo = carregar_som(os.path.join("music", "som_fundo.wav"))
 som_vitoria = carregar_som(os.path.join("music", "vitoria.wav"))
 som_derrota = carregar_som(os.path.join("music", "derrota.wav"))
@@ -45,11 +48,11 @@ def tocar_musica_fundo():
             mixer.music.set_volume(0.5)
             mixer.music.play(-1)
         except Exception as e:
-            print(f"Erro ao tocar música de fundo: {e}")
+            print("deu erro pra tocar o som de fundo:", e)
 
 tocar_musica_fundo()
 
-# ---------------- FUNÇÃO PARA LER CSV -------------------
+# --- FUNÇÃO PRA LER O MAPA (CSV) ---
 def read_csv(path):
     grid = []
     with open(path, "r") as f:
@@ -64,10 +67,10 @@ def read_csv(path):
             grid.append(cleaned)
     return grid
 
-# ---------------- MAPA GERAL --------------------------
+# aqui eu leio o arquivo do mapa (ficou em mapas/mapa_geral.csv)
 mapa = read_csv(os.path.join("mapas", "mapa_geral.csv"))
 
-# ---------------- CRIAÇÃO DOS OBJETOS -------------------
+# --- CRIAÇÃO DOS OBJETOS ---
 platforms = []
 lava_tiles = []
 enemies_list = []
@@ -75,6 +78,8 @@ hero = None
 goal = None
 start_pos = (0, 0)
 
+# aqui é tipo o que o número do mapa significa
+# 0 = chão, 1 = lava, 2 = mato (meta), 3 = rosquinha, 4 = vaca
 for row_idx, row in enumerate(mapa):
     for col_idx, val in enumerate(row):
         x = col_idx * TILE_SIZE_X
@@ -104,12 +109,13 @@ for row_idx, row in enumerate(mapa):
             hero.vy = 0
             start_pos = (x, y)
 
+# imagens da vaquinha andando (pra direita e pra esquerda)
 hero_walk_images = ["vaca_direta", "vaca_direta1"]
 hero_walk_left_images = ["vaca_esquerda", "vaca_esquerda1"]
 hero_frame = 0
-hero_direction = "right"  # direita por padrão
+hero_direction = "right"
 
-# ---------------- COLISÕES -----------------------------
+# --- COLISÕES ---
 def check_ground_collision():
     on_ground = False
     for tile in platforms:
@@ -125,27 +131,27 @@ def check_ground_collision():
 
 def check_collisions():
     global game_state
-    # Lava mata
+    # se encostar na lava ou rosquinha, morre
     for lava in lava_tiles:
         if hero.colliderect(lava):
             if som_derrota: mixer.Sound(som_derrota).play()
             mixer.music.stop()
             game_state = "morte"
             return
-    # Rosquinha mata
     for enemy in enemies_list:
         if hero.colliderect(enemy):
             if som_derrota: mixer.Sound(som_derrota).play()
             mixer.music.stop()
             game_state = "morte"
             return
-    # Mato vence
+    # se encostar no mato, ganha :)
     if goal and hero.colliderect(goal):
         if som_vitoria: mixer.Sound(som_vitoria).play()
         mixer.music.stop()
         game_state = "vitoria"
 
 def reset_hero():
+    # aqui é só pra reiniciar o jogo
     global game_state, hero_direction
     hero.x, hero.y = start_pos
     hero.vx = 0
@@ -154,14 +160,15 @@ def reset_hero():
     game_state = "jogando"
     tocar_musica_fundo()
 
-# ---------------- INIMIGOS -------------------
+# --- INIMIGOS (ROSQUINHAS) ---
 def move_enemies():
     for enemy in enemies_list:
         enemy.x += enemy.vx
+        # eles viram quando batem na parede
         if enemy.left < 0 or enemy.right > WIDTH:
             enemy.vx = -enemy.vx
 
-# ---------------- UPDATE -------------------------------
+# --- UPDATE (RODA O TEMPO TODO) ---
 def update():
     global hero_frame, game_state, hero_direction
 
@@ -170,6 +177,7 @@ def update():
             reset_hero()
         return
 
+    # gravidade e movimento
     hero.vy += GRAVITY
     hero.y += hero.vy
 
@@ -187,7 +195,7 @@ def update():
         hero_frame = (hero_frame + 0.1) % 2
         hero_direction = "right"
     else:
-        # Fica parado olhando na última direção
+        # se não tiver andando, fica parada olhando pra última direção
         if hero_direction == "right":
             hero.image = "vaca_direta"
         else:
@@ -195,16 +203,18 @@ def update():
 
     hero.x += hero.vx
 
+    # pulo
     if keyboard.space and on_ground:
         hero.vy = JUMP_FORCE
 
     move_enemies()
     check_collisions()
 
-# ---------------- DRAW ------------------------------
+# --- DESENHAR NA TELA ---
 def draw():
     screen.clear()
     screen.blit("fundo-1.png", (0, 0))
+
     for lava in lava_tiles:
         lava.draw()
     for tile in platforms:
@@ -215,6 +225,7 @@ def draw():
         goal.draw()
     hero.draw()
 
+    # telas de vitória e derrota
     if game_state == "vitoria":
         screen.draw.text(" VOCÊ VENCEU! ", center=(WIDTH/2, HEIGHT/2 - 30),
                          fontsize=64, color="white", owidth=1, ocolor="green")
