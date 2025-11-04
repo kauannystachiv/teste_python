@@ -54,3 +54,6 @@ Evite as rosquinhas e a lava!
 Toque o mato verde para vencer.
 
 Aperte R para reiniciar após morrer ou vencer.
+
+para organizar o jogo criei uma pasta super_vaca 
+e adicione pastas images, mapas, music e um arquivo estrutura assim que criar adicione cada item em seu respectivo lugar main.py, estruturas ficam apenas no projeti super_vaca 
