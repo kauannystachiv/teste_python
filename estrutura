@@ -1,0 +1,27 @@
+super_vaca/
+  main.py
+  images/
+    vaca_direta.png
+    vaca_direta1.png
+    vaca_esquerda.png
+    vaca_esquerda1.png
+    bloco1.png
+    bloco2.png
+    bloco3.png
+    bloco4.png
+    bloco5.png
+    lava.png
+    mato.png
+    rosquinhas.png
+    fundo.png
+  mapas/
+    mapa_bloco.csv
+    mapa_lava.csv
+    mapa_mato.csv
+    mapa_rosquinhas.csv
+    mapa_vaca.csv
+    mapa_geral.csv
+     sounds/
+    musica_fundo.wav   #trilha que toca durante o jogo
+    vitoria.wav        # toca ao chegar no mato
+    morte.wav          # toca ao tocar lava ou rosquinha
